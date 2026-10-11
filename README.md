@@ -11,79 +11,45 @@ Ideal für Wand-Tablets, auf denen nicht gescrollt werden soll.
 - **Chips:** die wichtigsten Dienste einzeln. Der Punkt zeigt den Container, die Weltkugel die Domain. Betroffene Chips werden eingefärbt.
   - Tipp auf einen Chip: More-Info-Dialog der Entität
   - Tipp auf die Weltkugel: öffnet die Domain
-- **Visueller Editor:** Dienste per Haken überwachen, mit „Als Chip anzeigen“ zusätzlich einzeln darstellen, Domain-Prüfung pro Dienst, Suche und Node-Filter für lange Listen
+- **Visueller Editor:** Dienste per Haken überwachen, mit „Als Chip anzeigen“ zusätzlich einzeln darstellen, Suche und Node-Filter für lange Listen
 
-Die große Schwester mit einer Kachel pro Dienst ist die [Homelab Status Card](https://github.com/FluxLP/homelab-status-card). Beide Karten teilen sich die Domain-Prüfung: Stehen sie auf demselben Dashboard, wird jede Domain trotzdem nur einmal geprüft.
+Die große Schwester mit einer Kachel pro Dienst ist die [Homelab Status Card](https://github.com/FluxLP/homelab-status-card). Beide Karten lesen dieselben Dienst-Entitäten der Integration.
 
 ## Installation
 
-### HACS (benutzerdefiniertes Repository)
-1. HACS → ⋮ → *Benutzerdefinierte Repositories*
-2. URL dieses Repositorys eintragen, Typ **Dashboard**
-3. „Homelab Status Compact“ installieren und den Browser bzw. die App neu laden
+1. Integration [Proxmox Homelab Monitor](https://github.com/FluxLP/proxmox-homelab-monitor) einrichten und unter *Konfigurieren → Domains der Dienste* die Domains eintragen
+2. HACS → ⋮ → *Benutzerdefinierte Repositories* → URL dieses Repositorys, Typ **Dashboard** → „Homelab Status Compact“ installieren
+3. Browser bzw. App neu laden
 
-### Manuell
-1. `homelab-status-compact.js` nach `/config/www/` kopieren
-2. *Einstellungen → Dashboards → ⋮ → Ressourcen* → `/local/homelab-status-compact.js` als **JavaScript-Modul** hinzufügen
-
-## Serverseitige Domain-Prüfung (empfohlen)
-
-Derselbe Eintrag wie bei der Homelab Status Card. Ist er dort schon eingerichtet, ist nichts weiter zu tun.
-
-```yaml
-shell_command:
-  homelab_status_check: >-
-    sh -c 'curl -s -o /dev/null -w "%{http_code}" --max-time 10 --url "$0" || true' {{ url }}
-```
-
-| Ergebnis | Anzeige |
-|---|---|
-| HTTP 1xx–4xx | erreichbar (auch 401/403, z. B. bei Login-Seiten) |
-| HTTP 5xx (z. B. 502 vom Reverse Proxy) | nicht erreichbar |
-| Timeout, DNS- oder Zertifikatsfehler | nicht erreichbar |
-
-**Ohne diesen Eintrag** prüft der Browser des Betrachters die Domain. Das sieht nur „erreichbar ja/nein“, ein 502 vom Reverse Proxy gilt dann als erreichbar.
-
-> Geprüft wird aus deinem Netz und nur, solange das Dashboard geöffnet ist.
+**Ab v2 kommen die Daten aus der Integration.** Sie prüft die Domains serverseitig rund um die Uhr; die Karte prüft selbst nichts mehr, der `shell_command` aus v1 wird nicht mehr gebraucht.
 
 ## Konfiguration
 
 ```yaml
 type: custom:homelab-status-compact
 title: feprox
-interval: 60
-base_domain: example.org
 expand_problems: false
 services:
-  - entity: binary_sensor.lxc_jellyfin_100_status
+  - entity: binary_sensor.lxc_jellyfin_100_service
     name: Jellyfin
     pinned: true
-    domain_check: true
-    domain: jellyfin.example.org
-  - entity: binary_sensor.lxc_pihole_105_status
+  - entity: binary_sensor.lxc_pihole_105_service
     name: Pi-hole
     pinned: true
-  - entity: binary_sensor.lxc_grocy_104_status   # nur im Banner überwacht
+  - entity: binary_sensor.lxc_grocy_104_service   # nur im Banner überwacht
 ```
 
 | Option | Standard | Beschreibung |
 |---|---|---|
 | `services` | – | Liste der überwachten Dienste (Pflicht) |
-| `title` | – | Name der Karte, steht links im Banner (z. B. `feprox`). Praktisch bei mehreren Karten, etwa einer pro Proxmox-Node |
-| `interval` | `60` | Prüfintervall der Domains in Sekunden (min. 15) |
-| `base_domain` | – | Nur für den Editor: Domain-Vorschlag `<dienst>.<base_domain>` |
+| `title` | – | Name der Karte, steht links im Banner (z. B. `feprox`) |
 | `expand_problems` | `false` | Problemliste automatisch aufklappen, sobald etwas nicht stimmt |
 
-Pro Dienst:
+Pro Dienst: `entity` (Pflicht, Dienst-Entität der Integration), `name`, `icon`, `pinned` (`true` = zusätzlich als Chip).
 
-| Option | Beschreibung |
-|---|---|
-| `entity` | Binärsensor des Containers/der VM, z. B. `binary_sensor.lxc_jellyfin_100_status` (Pflicht) |
-| `name` | Anzeigename |
-| `icon` | Icon im Chip (Standard `mdi:circle`) |
-| `pinned` | `true` zeigt den Dienst zusätzlich als Chip unter dem Banner |
-| `domain_check` | `true` prüft zusätzlich die Domain |
-| `domain` | Domain oder URL, z. B. `jellyfin.example.org` |
+## Umstieg von v1
+
+v1-Konfigurationen laufen weiter: `…_status`-Entitäten werden automatisch auf `…_service` umgestellt. `domain_check`, `domain`, `interval` und `base_domain` werden ignoriert und beim nächsten Speichern im Editor entfernt. Den `shell_command: homelab_status_check` in der `configuration.yaml` kannst du löschen.
 
 ## Lizenz
 
