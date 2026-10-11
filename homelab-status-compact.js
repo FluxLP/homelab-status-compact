@@ -4,7 +4,7 @@
  * (z. B. aus der Proxmox-VE-Integration) samt Domain-Erreichbarkeit zusammen,
  * darunter optional die wichtigsten Dienste als kleine Chips.
  */
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const CHECK_SERVICE = "homelab_status_check";
 
 const I18N = {
@@ -21,6 +21,7 @@ const I18N = {
     domain_unknown: "Domain wird geprüft…",
     domain_short: "Domain",
     general: "Allgemein",
+    title: "Name der Karte (optional, z. B. feprox)",
     interval: "Prüfintervall (Sekunden)",
     base_domain: "Basis-Domain (z. B. example.org)",
     expand_problems: "Probleme automatisch aufklappen",
@@ -57,6 +58,7 @@ const I18N = {
     domain_unknown: "Checking domain…",
     domain_short: "Domain",
     general: "General",
+    title: "Card name (optional, e.g. feprox)",
     interval: "Check interval (seconds)",
     base_domain: "Base domain (e.g. example.org)",
     expand_problems: "Expand problems automatically",
@@ -167,6 +169,11 @@ const CARD_STYLE = `
   .banner.clickable { cursor: pointer; }
   .banner > ha-icon { --mdc-icon-size: 22px; color: rgb(var(--c)); display: flex; flex: none; }
   .btext { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+  .bname {
+    font-weight: 700; font-size: 14px; color: var(--primary-text-color); white-space: nowrap;
+    padding-right: 8px; border-right: 1px solid var(--divider-color, rgba(0,0,0,0.2));
+    overflow: hidden; text-overflow: ellipsis; max-width: 40%; flex: none;
+  }
   .btitle { font-weight: 600; font-size: 14px; color: var(--primary-text-color); white-space: nowrap; }
   .bsub {
     font-size: 12px; color: var(--secondary-text-color);
@@ -353,16 +360,18 @@ class HomelabStatusCompact extends HTMLElement {
 
   _banner(problems, total) {
     const hass = this._hass;
+    const name = this._config.title ? `<span class="bname" title="${esc(this._config.title)}">${esc(this._config.title)}</span>` : "";
     if (!total) {
       return `<div class="banner" style="--c: ${COLORS.unknown}">
           <ha-icon icon="mdi:information-outline"></ha-icon>
-          <div class="btext"><span class="btitle">${t(hass, "no_services")}</span></div>
+          <div class="btext">${name}<span class="btitle">${t(hass, "no_services")}</span></div>
         </div>`;
     }
     if (!problems.length) {
       return `<div class="banner" style="--c: ${COLORS.ok}">
           <ha-icon icon="mdi:check-circle"></ha-icon>
           <div class="btext">
+            ${name}
             <span class="btitle">${t(hass, "all_ok")}</span>
             <span class="bsub">${total}/${total}</span>
           </div>
@@ -377,6 +386,7 @@ class HomelabStatusCompact extends HTMLElement {
     return `<div class="banner clickable" style="--c: ${COLORS[sev]}" title="${esc(summary)}">
         <ha-icon icon="mdi:alert-circle"></ha-icon>
         <div class="btext">
+          ${name}
           <span class="btitle">${esc(title)}</span>
           <span class="bsub">${esc(summary)}</span>
         </div>
@@ -752,6 +762,9 @@ class HomelabStatusCompactEditor extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${EDITOR_STYLE}</style>
       <h3>${t(hass, "general")}</h3>
+      <label class="field">${t(hass, "title")}
+        <input type="text" data-field="title" value="${esc(c.title || "")}" placeholder="feprox">
+      </label>
       <div class="row2">
         <label class="field">${t(hass, "interval")}
           <input type="number" min="15" step="5" data-field="interval" value="${esc(c.interval ?? 60)}">

@@ -4,7 +4,7 @@ Eine platzsparende Lovelace-Karte für Home Assistant. Statt einer Kachel pro Co
 
 Ideal für Wand-Tablets, auf denen nicht gescrollt werden soll.
 
-- **Banner:** grün „Alles in Betrieb · 24/24“ oder rot/orange „3 Probleme: Jellyfin offline · Immich Domain 502 …“
+- **Banner:** optional mit frei wählbarem Namen (z. B. „feprox“), dann grün „Alles in Betrieb · 24/24“ oder rot/orange „3 Probleme: Jellyfin offline · Immich Domain 502 …“
   - Rot: ein Container/VM ist offline oder nicht verfügbar
   - Orange: der Container läuft, aber die Domain ist nicht erreichbar
   - Ein Tipp auf den Banner klappt die Problemliste mit den genauen Gründen auf und wieder zu
@@ -50,6 +50,7 @@ shell_command:
 
 ```yaml
 type: custom:homelab-status-compact
+title: feprox
 interval: 60
 base_domain: example.org
 expand_problems: false
@@ -68,6 +69,7 @@ services:
 | Option | Standard | Beschreibung |
 |---|---|---|
 | `services` | – | Liste der überwachten Dienste (Pflicht) |
+| `title` | – | Name der Karte, steht links im Banner (z. B. `feprox`). Praktisch bei mehreren Karten, etwa einer pro Proxmox-Node |
 | `interval` | `60` | Prüfintervall der Domains in Sekunden (min. 15) |
 | `base_domain` | – | Nur für den Editor: Domain-Vorschlag `<dienst>.<base_domain>` |
 | `expand_problems` | `false` | Problemliste automatisch aufklappen, sobald etwas nicht stimmt |
